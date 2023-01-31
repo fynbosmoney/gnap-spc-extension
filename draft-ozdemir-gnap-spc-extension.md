@@ -8,19 +8,19 @@ number:
 date:
 consensus: true
 v: 3
-area: AREA
-workgroup: WG Working Group
+area: "Security"
+workgroup: "Grant Negotiation and Authorization Protocol"
 keyword:
  - gnap
  - secure payment confirmation
  - extension
 venue:
-  group: WG
-  type: Working Group
-  mail: WG@example.com
-  arch: https://example.com/WG
-  github: USER/REPO
-  latest: https://example.com/LATEST
+  group: "Grant Negotiation and Authorization Protocol"
+  type: "Working Group"
+  mail: "txauth@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/txauth/"
+  github: "fynbos-dev/gnap-spc-extension"
+  latest: "https://fynbos-dev.github.io/gnap-spc-extension/draft-ozdemir-gnap-spc-extension.html"
 
 author:
  -
