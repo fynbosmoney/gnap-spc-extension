@@ -5,7 +5,7 @@
 Grant Negotiation and Authorization Protocol               O. T. Ozdemir
 Internet-Draft                                            A. Hope-Bailie
 Intended status: Informational                                    Fynbos
-Expires: 4 August 2023                                   31 January 2023
+Expires: 24 August 2023                                 20 February 2023
 
 
                GNAP Secure Payment Confirmation Extension
@@ -14,8 +14,10 @@ Expires: 4 August 2023                                   31 January 2023
 Abstract
 
    GNAP Secure Payment Confirmation (SPC) Extension is a GNAP extension
-   that defines a GNAP interaction method for authentication of the
-   resource owner during a payment transaction. test
+   that defines a method for authentication of the end user during a
+   payment transaction.  This extension helps leverage hardware and
+   software authenticators such as biometric scanners while
+   authenticating the end user.
 
 About This Document
 
@@ -50,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 August 2023.
+   This Internet-Draft will expire on 24 August 2023.
 
 Copyright Notice
 
@@ -69,18 +71,192 @@ Copyright Notice
 Table of Contents
 
    1.  Introduction
-   2.  Conventions and Definitions
-   3.  Security Considerations
-   4.  IANA Considerations
-   5.  Normative References
+   2.  Checking Feature Support
+   3.  Requesting Credentials
+   4.  Sending Credentials
+   5.  Authenticating User
+   6.  Interaction Continue
+   7.  Verifying Authentication Assertion
+   8.  Conventions and Definitions
+   9.  Security Considerations
+   10. IANA Considerations
+   11. Normative References
    Acknowledgments
    Authors' Addresses
 
 1.  Introduction
 
-   TODO Introduction
+   GNAP Secure Payment Confirmation (SPC) Extension is an extension
+   developed on top of Grant Negotiation and Agreement Protocol
+   [I-D.ietf-gnap-core-protocol-12].  It defines a method for
+   authentication of the end user during a payment transaction using
+   Secure Payment Confirmation.  This extension helps leverage
+   authenticators such as fingerprint scanners, facial recognition
+   systems, etc. while authenticating the end user in a GNAP exchange.
 
-2.  Conventions and Definitions
+2.  Checking Feature Support
+
+   This extension only works if the end user's user agent supports
+   Payment Request API and SPC.  To detect whether SPC is supported on
+   the browser, client instance can send a fake call
+   to canMakePayment().
+
+   The following code provides a feature detect function for the Payment
+   Request API and the SPC on a merchant's website.
+
+   const isSecurePaymentConfirmationSupported = async () => {
+     if (!'PaymentRequest' in window) {
+       return [false, 'Payment Request API is not supported'];
+     }
+
+     try {
+       // The data below is the minimum required to create the request and
+       // check if a payment can be made.
+       const supportedInstruments = [
+         {
+           supportedMethods: "secure-payment-confirmation",
+           data: {
+             // RP's hostname as its ID
+             rpId: 'rp.example',
+             // A dummy credential ID
+             credentialIds: [new Uint8Array(1)],
+             // A dummy challenge
+             challenge: new Uint8Array(1),
+             instrument: {
+               // Non-empty display name string
+               displayName: ' ',
+               // Transparent-black pixel.
+               icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==',
+             },
+             // A dummy merchant origin
+             payeeOrigin: 'https://non-existent.example',
+           }
+         }
+       ];
+
+       const details = {
+         // Dummy shopping details
+         total: {label: 'Total', amount: {currency: 'USD', value: '0'}},
+       };
+
+       const request = new PaymentRequest(supportedInstruments, details);
+       const canMakePayment = await request.canMakePayment();
+       return [canMakePayment, canMakePayment ? '' : 'SPC is not available'];
+     } catch (error) {
+       console.error(error);
+       return [false, error.message];
+     }
+   };
+
+3.  Requesting Credentials
+
+   A client that wishes to request SPC credentials from authorization
+   server MUST request a grant from authorization server with SPC as its
+   preferred interaction method.  To request a grant, the client sends
+   an HTTP POST with a JSON document to the grant endpoint of the AS.
+   The JSON object is a GNAP grant request that uses SPC as its
+   interaction start method.  SPC extension adds spc value to the start
+   field in the interact object
+
+   A non-normative example of a grant request that uses SPC as its
+   interaction start method is below.  Here the client instance
+   identifies the end user using the identifier field.
+
+   {
+     "access_token":{
+       "access":[
+         {
+           "type": "outgoing-payment",
+           "actions":[
+             "create",
+             "read",
+             "list"
+           ],
+           "identifier": "https://wallet.me/adrian",
+           "limits":{
+             "sendAmount":{
+               "value": "26312",
+               "assetCode": "USD",
+               "assetScale": 2
+             },
+             "receiveAmount":{
+               "value": "24999",
+               "assetCode": "USD",
+               "assetScale": 2
+             }
+           }
+         }
+       ]
+      },
+      "client":{
+         "display":{
+           "name": "Merchant Commerce",
+           "uri": "https://merchant.com"
+         },
+         "key":{
+           "proof": "httpsig",
+           "jwk":{
+             "alg": "EdDSA",
+             "kty": "OKP",
+             "use": "sig",
+             "crv": "Ed25519",
+             "kid": "xyz-1",
+             "x": "jfiusdhvherui..."
+            }
+         }
+      },
+      "interact":{
+         "start":[
+            "spc"
+         ]
+      }
+   }
+
+4.  Sending Credentials
+
+   In response to a client instance’s grant request, if the AS
+   determines that it has a registered SPC credential of the end user,
+   the AS responds with JSON object as the HTTP body.  AS uses the spc
+   field in the interact object to provide necessary information to
+   initiate a SPC authentication.  This field contains a JSON object
+   with the following properties.
+
+   credential_ids (string array):  Each credential MUST be base64url
+      encoded.
+
+   challenge (string):  A random challenge that the relying party
+      generates on the server side to prevent replay attacks.  The
+      challenge MUST be base64url encoded.
+
+   A non-normative example of a grant request continue response that
+   uses SPC as its interaction method is below.
+
+   {
+     "interact": {
+       "spc": {
+         "credential_ids": [],
+         "challenge": [21,31,105 /* 29 more random bytes generated by the relying party */]
+       }
+     },
+     "continue": {
+       "access_token": {
+         "value": "80UPRY5NM33OMUKMKSKU"
+       },
+       "uri": "http://wallet.com/adrian/continue/5e69f364-b14d-4fdf-8b6b-3b6ffb52c339"
+     }
+   }
+
+5.  Authenticating User
+
+6.  Interaction Continue
+
+   TODO
+
+7.  Verifying Authentication Assertion
+
+   TODO
+
+8.  Conventions and Definitions
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
@@ -88,15 +264,22 @@ Table of Contents
    BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-3.  Security Considerations
+9.  Security Considerations
 
    TODO Security
 
-4.  IANA Considerations
+10.  IANA Considerations
 
    This document has no IANA actions.
 
-5.  Normative References
+11.  Normative References
+
+   [I-D.ietf-gnap-core-protocol-12]
+              Richer, J. and F. Imbault, "Grant Negotiation and
+              Authorization Protocol", Work in Progress, Internet-Draft,
+              draft-ietf-gnap-core-protocol-12, 29 November 2022,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-gnap-
+              core-protocol-12>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
