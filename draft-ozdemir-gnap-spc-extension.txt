@@ -5,7 +5,7 @@
 Grant Negotiation and Authorization Protocol               O. T. Ozdemir
 Internet-Draft                                            A. Hope-Bailie
 Intended status: Informational                                    Fynbos
-Expires: 24 August 2023                                 20 February 2023
+Expires: 26 August 2023                                 22 February 2023
 
 
                GNAP Secure Payment Confirmation Extension
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 24 August 2023.
+   This Internet-Draft will expire on 26 August 2023.
 
 Copyright Notice
 
@@ -73,9 +73,9 @@ Table of Contents
    1.  Introduction
    2.  Checking Feature Support
    3.  Requesting Credentials
-   4.  Sending Credentials
+   4.  Serving Credentials
    5.  Authenticating User
-   6.  Interaction Continue
+   6.  Completing Interaction
    7.  Verifying Authentication Assertion
    8.  Conventions and Definitions
    9.  Security Considerations
@@ -86,13 +86,14 @@ Table of Contents
 
 1.  Introduction
 
-   GNAP Secure Payment Confirmation (SPC) Extension is an extension
-   developed on top of Grant Negotiation and Agreement Protocol
-   [I-D.ietf-gnap-core-protocol-12].  It defines a method for
-   authentication of the end user during a payment transaction using
-   Secure Payment Confirmation.  This extension helps leverage
-   authenticators such as fingerprint scanners, facial recognition
-   systems, etc. while authenticating the end user in a GNAP exchange.
+   GNAP Secure Payment Confirmation [W3C.secure-payment-confirmation]
+   Extension is an extension developed on top of Grant Negotiation and
+   Agreement Protocol [I-D.ietf-gnap-core-protocol-12].  It defines a
+   method for authentication of the end user during a payment
+   transaction using Secure Payment Confirmation.  This extension helps
+   leverage authenticators such as fingerprint scanners, facial
+   recognition systems, etc. while authenticating the end user in a GNAP
+   exchange.
 
 2.  Checking Feature Support
 
@@ -156,63 +157,49 @@ Table of Contents
    an HTTP POST with a JSON document to the grant endpoint of the AS.
    The JSON object is a GNAP grant request that uses SPC as its
    interaction start method.  SPC extension adds spc value to the start
-   field in the interact object
+   field in the interact object.  The client *MUST* identify the end
+   user using the user property in the grant request object to allow AS
+   find the registered credentials for the user.
 
    A non-normative example of a grant request that uses SPC as its
-   interaction start method is below.  Here the client instance
-   identifies the end user using the identifier field.
+   interaction start method is below.
 
-   {
-     "access_token":{
-       "access":[
-         {
-           "type": "outgoing-payment",
-           "actions":[
-             "create",
-             "read",
-             "list"
-           ],
-           "identifier": "https://wallet.me/adrian",
-           "limits":{
-             "sendAmount":{
-               "value": "26312",
-               "assetCode": "USD",
-               "assetScale": 2
-             },
-             "receiveAmount":{
-               "value": "24999",
-               "assetCode": "USD",
-               "assetScale": 2
-             }
+   "access_token": {
+     "access": [{
+       "type": "outgoing-payment",
+       "actions": [
+         "create",
+         "read",
+         "list"
+       ],
+     }]
+   },
+   "client": {
+       "key": {
+         "proof": "httpsig",
+         "jwk": {
+           "alg": "EdDSA",
+           "kty": "OKP",
+           "use": "sig",
+           "crv": "Ed25519",
+           "kid": "xyz-1",
+           "x": "jfiusdhvherui..."
            }
-         }
-       ]
-      },
-      "client":{
-         "display":{
-           "name": "Merchant Commerce",
-           "uri": "https://merchant.com"
-         },
-         "key":{
-           "proof": "httpsig",
-           "jwk":{
-             "alg": "EdDSA",
-             "kty": "OKP",
-             "use": "sig",
-             "crv": "Ed25519",
-             "kid": "xyz-1",
-             "x": "jfiusdhvherui..."
-            }
-         }
-      },
-      "interact":{
-         "start":[
-            "spc"
-         ]
-      }
+       }
+     },
+   "interact": {
+     "start": [
+       "spc"
+     ]
+   },
+   "user": {
+     "sub_ids": [{
+       "subject_type": "email",
+       "email": "user@example.com"
+     }]
    }
 
-4.  Sending Credentials
+4.  Serving Credentials
 
    In response to a client instance’s grant request, if the AS
    determines that it has a registered SPC credential of the end user,
@@ -221,12 +208,12 @@ Table of Contents
    initiate a SPC authentication.  This field contains a JSON object
    with the following properties.
 
-   credential_ids (string array):  Each credential MUST be base64url
-      encoded.
+   credential_ids (array of strings):  Each credential MUST be base64url
+      encoded. *REQUIRED*
 
    challenge (string):  A random challenge that the relying party
       generates on the server side to prevent replay attacks.  The
-      challenge MUST be base64url encoded.
+      challenge MUST be base64url encoded. *REQUIRED*.
 
    A non-normative example of a grant request continue response that
    uses SPC as its interaction method is below.
@@ -234,8 +221,8 @@ Table of Contents
    {
      "interact": {
        "spc": {
-         "credential_ids": [],
-         "challenge": [21,31,105 /* 29 more random bytes generated by the relying party */]
+         "credential_ids": ["MTIzMjMxMzIyMz..."],
+         "challenge": "dGhpcyBpcyBh..."
        }
      },
      "continue": {
@@ -248,13 +235,53 @@ Table of Contents
 
 5.  Authenticating User
 
-6.  Interaction Continue
+   In response to the AS's grant request response, the client should
+   initiate the authentication ceremony performing the steps as
+   specified in [W3C.secure-payment-confirmation].  The client instance
+   should decode the challenge and each credential from credential_ids
+   using base64url and convert them to buffer.
 
-   TODO
+6.  Completing Interaction
+
+   The client *MUST* encode each property of the Web Authentication
+   Assetion object [W3C.webauthn-3] returned from successful
+   authentication ceremony using base64url.
+
+   clientDataJSON (string):  clientDataJSON property from Web
+      Authentication Assertion object.  This *MUST* encoded using
+      base64url. *REQUIRED*.
+
+   authenticatorData (string):  authenticatorData property from Web
+      Authentication Assertion object.  This *MUST* encoded using
+      base64url. *REQUIRED*.
+
+   signature (string):  signature property from Web Authentication
+      Assertion object.  This *MUST* encoded using base64url.
+      *REQUIRED*.
+
+   userHandle (string):  userHandle property from Web Authentication
+      Assertion object.  This *MUST* encoded using base64url.
+      *OPTIONAL*.
+
+   A non-normative example of a interaction completion response is
+   below.
+
+   "public_key_cred": {
+     "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
+     "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
+     "signature": "c2lnbmF0dXJlIGV4YW...",
+     "userHandle": "dXNlckhhbmRsZSBleG..."
+   }
 
 7.  Verifying Authentication Assertion
 
-   TODO
+   In order to complete authentication ceremony and authenticate the end
+   user, the AS *MUST* perform the steps specified in Section 8.1 of
+   Secure Payment Confirmation.  The AS should decode each property of
+   public key credential in the response using base64url before
+   performing the verification.  When verification is completed
+   successfully, the AS can grant access and return a proper grant
+   response.
 
 8.  Conventions and Definitions
 
@@ -289,6 +316,16 @@ Table of Contents
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [W3C.secure-payment-confirmation]
+              "Secure Payment Confirmation", W3C WD secure-payment-
+              confirmation, W3C secure-payment-confirmation,
+              <https://www.w3.org/TR/secure-payment-confirmation/>.
+
+   [W3C.webauthn-3]
+              "Web Authentication: An API for accessing Public Key
+              Credentials - Level 3", W3C WD webauthn-3, W3C webauthn-3,
+              <https://www.w3.org/TR/webauthn-3/>.
 
 Acknowledgments
 
