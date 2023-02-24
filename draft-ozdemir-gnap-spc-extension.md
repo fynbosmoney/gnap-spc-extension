@@ -38,6 +38,7 @@ normative:
   W3C.webauthn-3: WebAuthn
 
 informative:
+  W3C.payment-request-1.1: PaymentRequest
 
 
 --- abstract
@@ -48,13 +49,13 @@ GNAP Secure Payment Confirmation (SPC) Extension is a GNAP extension that define
 
 # Introduction
 
-GNAP Secure Payment Confirmation {{-SPC}} Extension is an extension developed on top of Grant Negotiation and Agreement Protocol {{-GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation. This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating the end user in a GNAP exchange.
+GNAP Secure Payment Confirmation Extension is an extension developed on top of the Grant Negotiation and Agreement Protocol {{-GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation (SPC){{-SPC}}. This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating during a GNAP interaction.
 
 # Checking Feature Support
 
-This extension only works if the end user's user agent supports Payment Request API and SPC. To detect whether SPC is supported on the browser, client instance can send a fake call to `canMakePayment()`.
+This extension only works if the end user's user agent supports the Payment Request API {{-PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
 
-The following code provides a feature detect function for the Payment Request API and the SPC on a merchant's website.
+The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.
 
 ~~~ javascript
 const isSecurePaymentConfirmationSupported = async () => {
@@ -104,7 +105,9 @@ const isSecurePaymentConfirmationSupported = async () => {
 
 # Requesting Credentials
 
-A client that wishes to request SPC credentials from authorization server MUST request a grant from authorization server with SPC as its preferred interaction method. To request a grant, the client sends an HTTP POST with a JSON document to the grant endpoint of the AS. The JSON object is a GNAP grant request that uses SPC as its interaction start method. SPC extension adds `spc` value to the `start` field in the `interact` object. The client **MUST** identify the end user using the `user` property in the grant request object to allow AS find the registered credentials for the user.
+A client that is able to use SPC for user interaction can request a grant from an authorization server with SPC as its preferred interaction start method. 
+
+This document defines `spc` as a new accepted value for the `start` field in the `interact` object. When requesting the SPC interaction method the client **MUST** identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user.
 
 A non-normative example of a grant request that uses SPC as its interaction start method is below.
 
@@ -114,8 +117,6 @@ A non-normative example of a grant request that uses SPC as its interaction star
     "type": "outgoing-payment",
     "actions": [
       "create",
-      "read",
-      "list"
     ],
   }]
 },
@@ -147,7 +148,7 @@ A non-normative example of a grant request that uses SPC as its interaction star
 
 # Serving Credentials
 
-In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with JSON object as the HTTP body. AS uses the `spc` field in the `interact` object to provide necessary information to initiate a SPC authentication. This field contains a JSON object with the following properties.
+In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object. This field contains an object with the following properties.
 
 `credential_ids` (array of strings):
 : Each credential MUST be base64url encoded. **REQUIRED**
@@ -175,36 +176,42 @@ A non-normative example of a grant request continue response that uses SPC as it
 ~~~
 
 # Authenticating User
-In response to the AS's grant request response, the client should initiate the authentication ceremony performing the steps as specified in {{-SPC}}. The client instance should decode the `challenge` and each credential from `credential_ids` using base64url and convert them to buffer.
+In response to the AS's grant request response, the client should initiate the authentication ceremony performing the steps as specified in {{-SPC}}. The client instance should decode the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API.
 
 # Completing Interaction
-The client **MUST** encode each property of the Web Authentication Assetion object {{-WebAuthn}} returned from successful authentication ceremony using base64url.
+The client completes the interaction by posting the output of the SPC authentication ceremony to the grant continuation URI. The body of the continuation request is an object with a single property `public_key_cred`.
+
+The client **MUST** encode each property of the Web Authentication Assertion object {{-WebAuthn}} returned from a successful authentication ceremony using base64url and store these as properties of the `public_key_cred` object.
 
 `clientDataJSON` (string):
-: `clientDataJSON` property from Web Authentication Assertion object. This **MUST** encoded using base64url. **REQUIRED**.
+: `clientDataJSON` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
 
 `authenticatorData` (string):
-: `authenticatorData` property from Web Authentication Assertion object. This **MUST** encoded using base64url. **REQUIRED**.
+: `authenticatorData` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
 
 `signature` (string):
-: `signature` property from Web Authentication Assertion object. This **MUST** encoded using base64url. **REQUIRED**.
+: `signature` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
 
 `userHandle` (string):
-: `userHandle` property from Web Authentication Assertion object. This **MUST** encoded using base64url. **OPTIONAL**.
+: `userHandle` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **OPTIONAL**.
 
-A non-normative example of a interaction completion response is below.
+A non-normative example of an interaction completion response body is below.
 
 ~~~ json
-"public_key_cred": {
-  "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
-  "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
-  "signature": "c2lnbmF0dXJlIGV4YW...",
-  "userHandle": "dXNlckhhbmRsZSBleG..."
+{
+  "public_key_cred": {
+    "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
+    "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
+    "signature": "c2lnbmF0dXJlIGV4YW...",
+    "userHandle": "dXNlckhhbmRsZSBleG..."
+  }
 }
 ~~~
 
 # Verifying Authentication Assertion
-In order to complete authentication ceremony and authenticate the end user, the AS **MUST** perform the steps specified in Section 8.1 of Secure Payment Confirmation. The AS should decode each property of public key credential in the response using base64url before performing the verification. When verification is completed successfully, the AS can grant access and return a proper grant response.
+In order to complete authentication ceremony and authenticate the end user, the AS **MUST** perform the steps specified in Section 8.1 of Secure Payment Confirmation. The AS should decode each property of the public key credential in the response using base64url before performing the verification.
+
+The AS MUST ensure that the transaction details encoded in the public key credential match the details of the transaction that the client is requesting a grant to perform.
 
 # Conventions and Definitions
 
