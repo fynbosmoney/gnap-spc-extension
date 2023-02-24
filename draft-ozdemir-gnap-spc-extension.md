@@ -105,7 +105,7 @@ const isSecurePaymentConfirmationSupported = async () => {
 
 # Requesting Credentials
 
-A client that is able to use SPC for user interaction can request a grant from an authorization server with SPC as its preferred interaction start method. 
+A client that is able to use SPC for user interaction can request a grant from an authorization server with SPC as its preferred interaction start method.
 
 This document defines `spc` as a new accepted value for the `start` field in the `interact` object. When requesting the SPC interaction method the client **MUST** identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user.
 
