@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-02-23T00:53:49.131392+00:00",
+  "timestamp": "2023-02-26T01:01:47.743144+00:00",
   "repo": "fynbos-dev/gnap-spc-extension",
   "labels": [
     {
@@ -50,5 +50,34 @@
     }
   ],
   "issues": [],
-  "pulls": []
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOI1pK9c5Krd8D",
+      "title": "Some editorial and informative ref to PR API",
+      "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/1",
+      "state": "MERGED",
+      "author": "adrianhopebailie",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2023-02-24T09:13:12Z",
+      "updatedAt": "2023-02-25T15:24:12Z",
+      "baseRepository": "fynbos-dev/gnap-spc-extension",
+      "baseRefName": "main",
+      "baseRefOid": "208129fd90777f36c761ad7314e75cb55cae5013",
+      "headRepository": "fynbos-dev/gnap-spc-extension",
+      "headRefName": "adrianhopebailie-patch-1",
+      "headRefOid": "861cd4477c6f22ce5d77518e94692e3645437492",
+      "closedAt": "2023-02-24T09:22:25Z",
+      "mergedAt": "2023-02-24T09:22:25Z",
+      "mergedBy": "omertoast",
+      "mergeCommit": {
+        "oid": "c148b42bcf7f1c61c0112571b240650ebbec9e31"
+      },
+      "comments": [],
+      "reviews": []
+    }
+  ]
 }
