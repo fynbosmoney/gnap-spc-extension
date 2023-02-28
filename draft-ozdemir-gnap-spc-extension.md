@@ -51,57 +51,10 @@ GNAP Secure Payment Confirmation (SPC) Extension is a GNAP extension that define
 
 GNAP Secure Payment Confirmation Extension is an extension developed on top of the Grant Negotiation and Agreement Protocol {{-GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation (SPC){{-SPC}}. This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating during a GNAP interaction.
 
-# Checking Feature Support
+## Conventions and Definitions
 
-This extension only works if the end user's user agent supports the Payment Request API {{-PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
+{::boilerplate bcp14-tagged}
 
-The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.
-
-~~~ javascript
-const isSecurePaymentConfirmationSupported = async () => {
-  if (!'PaymentRequest' in window) {
-    return [false, 'Payment Request API is not supported'];
-  }
-
-  try {
-    // The data below is the minimum required to create the request and
-    // check if a payment can be made.
-    const supportedInstruments = [
-      {
-        supportedMethods: "secure-payment-confirmation",
-        data: {
-          // RP's hostname as its ID
-          rpId: 'rp.example',
-          // A dummy credential ID
-          credentialIds: [new Uint8Array(1)],
-          // A dummy challenge
-          challenge: new Uint8Array(1),
-          instrument: {
-            // Non-empty display name string
-            displayName: ' ',
-            // Transparent-black pixel.
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==',
-          },
-          // A dummy merchant origin
-          payeeOrigin: 'https://non-existent.example',
-        }
-      }
-    ];
-
-    const details = {
-      // Dummy shopping details
-      total: {label: 'Total', amount: {currency: 'USD', value: '0'}},
-    };
-
-    const request = new PaymentRequest(supportedInstruments, details);
-    const canMakePayment = await request.canMakePayment();
-    return [canMakePayment, canMakePayment ? '' : 'SPC is not available'];
-  } catch (error) {
-    console.error(error);
-    return [false, error.message];
-  }
-};
-~~~
 
 # Requesting Credentials
 
@@ -213,11 +166,6 @@ In order to complete authentication ceremony and authenticate the end user, the 
 
 The AS MUST ensure that the transaction details encoded in the public key credential match the details of the transaction that the client is requesting a grant to perform.
 
-# Conventions and Definitions
-
-{::boilerplate bcp14-tagged}
-
-
 # Security Considerations
 
 TODO Security
@@ -228,9 +176,62 @@ TODO Security
 This document has no IANA actions.
 
 
---- back
-
 # Acknowledgments
 {:numbered="false"}
 
 TODO acknowledge.
+
+--- back
+
+# Checking Feature Support
+
+This extension only works if the end user's user agent supports the Payment Request API {{-PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
+
+The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.
+
+~~~ javascript
+const isSecurePaymentConfirmationSupported = async () => {
+  if (!'PaymentRequest' in window) {
+    return [false, 'Payment Request API is not supported'];
+  }
+
+  try {
+    // The data below is the minimum required to create the request and
+    // check if a payment can be made.
+    const supportedInstruments = [
+      {
+        supportedMethods: "secure-payment-confirmation",
+        data: {
+          // RP's hostname as its ID
+          rpId: 'rp.example',
+          // A dummy credential ID
+          credentialIds: [new Uint8Array(1)],
+          // A dummy challenge
+          challenge: new Uint8Array(1),
+          instrument: {
+            // Non-empty display name string
+            displayName: ' ',
+            // Transparent-black pixel.
+            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==',
+          },
+          // A dummy merchant origin
+          payeeOrigin: 'https://non-existent.example',
+        }
+      }
+    ];
+
+    const details = {
+      // Dummy shopping details
+      total: {label: 'Total', amount: {currency: 'USD', value: '0'}},
+    };
+
+    const request = new PaymentRequest(supportedInstruments, details);
+    const canMakePayment = await request.canMakePayment();
+    return [canMakePayment, canMakePayment ? '' : 'SPC is not available'];
+  } catch (error) {
+    console.error(error);
+    return [false, error.message];
+  }
+};
+~~~
+
