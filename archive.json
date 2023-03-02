@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-02-28T00:56:31.593766+00:00",
+  "timestamp": "2023-03-02T01:00:40.357279+00:00",
   "repo": "fynbos-dev/gnap-spc-extension",
   "labels": [
     {
@@ -76,6 +76,32 @@
       "mergeCommit": {
         "oid": "c148b42bcf7f1c61c0112571b240650ebbec9e31"
       },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOI1pK9c5K-IN0",
+      "title": "Reorganize Spec",
+      "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/2",
+      "state": "OPEN",
+      "author": "jricher",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2023-02-28T21:10:13Z",
+      "updatedAt": "2023-02-28T21:10:13Z",
+      "baseRepository": "fynbos-dev/gnap-spc-extension",
+      "baseRefName": "main",
+      "baseRefOid": "c148b42bcf7f1c61c0112571b240650ebbec9e31",
+      "headRepository": "jricher/gnap-spc-extension",
+      "headRefName": "jricher-reorg",
+      "headRefOid": "fa1a5f9a2278aee5fe3c8232f0db974ed18bb814",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
       "comments": [],
       "reviews": []
     }
