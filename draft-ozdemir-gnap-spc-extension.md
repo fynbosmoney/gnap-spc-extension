@@ -50,6 +50,8 @@ GNAP Secure Payment Confirmation (SPC) Extension is a Grant Negotiation and Auth
 
 GNAP Secure Payment Confirmation Extension is an extension developed on top of the Grant Negotiation and Agreement Protocol {{GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation ({{SPC}}). This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating during a GNAP interaction.
 
+A method for detecting this capability in the client software is provided in {{detect-spc}}.
+
 ## Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
@@ -57,16 +59,61 @@ GNAP Secure Payment Confirmation Extension is an extension developed on top of t
 
 # Secure Payment Confirmation Interaction
 
-When using SPC in {{GNAP}}, the end user is prompted to authenticate during the interaction phase of the protocol, when the grant is in the _pending_ state. The end user provides confirmation using their credential, which the client instance presents back to the AS in a continuation response. The AS then verifies this confirmation in order to process the grant request and grant access to the client instance.
+When using SPC in {{GNAP}}, the end user is prompted to authenticate during the interaction phase of the protocol, when the grant is in the _pending_ state. 
+
+The overall flow of the protocol is shown here:
+
+~~~ aasvg
++--------+                                  +--------+         
+| Client |                                  |   AS   |         
+|Instance|                                  |        |
+|        |                                  |        | 
+|        +--(1)--- Request Access --------->|        | 
+|        |                                  |        | 
+|        |<-(2)-- Interaction Needed -------+        | 
+|        |                                  |        | 
+|        |           .----.                 |        | 
+|        |          | End  |                |        | 
+|        |          | User |                |        | 
+|        |<==(3)===>|------+                |        | 
+|        |   SPC    |  RO  |                |        | 
+|        |          |      |                |        | 
+|        |           `----`                 |        | 
+|        |                                  |        | 
+|        +--(4)--- Continue Request ------->|        |
+|        |                                  |        |
+|        |                              ,---+        |
+|        |                         (5) |    |        |
+|        |                         SPC  `-->|        |
+|        |                                  |        |
+|        |<-(6)----- Grant Access ----------+        |
+|        |                                  |        |
++--------+                                  +--------+
+~~~
+
+1. The client instance makes a grant request to the AS, indicating that it can support SPC as an interaction start method. The client instance includes an identifier for the intended end user in the request. The client instance does not include an interaction finish method, since the interaction will happen outside of the AS and the client software will not need to be signaled by the AS to continue the grant request. ({{request-credentials}})
+
+2. The AS creates a new grant request in the _pending_ state and responds to the grant request with a challenge to be signed by a set of candidate credentials. ({{serve-credentials}})
+
+3. The client instance engages the SPC protocol to sign the challenge. ({{authenticate-user}})
+
+4. The client instance continues the grant request, including the results of the SPC challenge response from (3) in the grant continuation request. ({{complete-interaction}})
+
+5. The AS validates the signature, completing the SPC process and placing the grant in the _approved_ state. ({{verifying-authentication}})
+
+6. The AS returns an access token in a standard GNAP grant response.
+
+
+The end user provides confirmation using their credential, which the client instance presents back to the AS in a continuation response. The AS then verifies this confirmation in order to process the grant request and grant access to the client instance.
 
 
 ## Requesting Credentials {#request-credentials}
 
-A client that is able to use SPC for user interaction can request a grant from an authorization server with SPC as its preferred interaction start method.
+A client instance that is able to use SPC for user interaction can request a grant from an authorization server with SPC as an interaction start method.
 
 The SPC interaction start method is defined as a string type with value `spc`. If the `spc` interaction start method is accepted, the corresponding response is returned as discussed in {{serve-credentials}}.
 
-When requesting the SPC interaction method the client **MUST** identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user. If the `user` property is not included in the request, the AS **MUST NOT** enable this interaction mode for this request.
+When requesting the SPC interaction method the client MUST identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user. If the `user` property is not included in the request, the AS MUST NOT enable this interaction mode for this request.
 
 A non-normative example of a grant request that uses SPC as its interaction start method is below.
 
@@ -105,7 +152,7 @@ A non-normative example of a grant request that uses SPC as its interaction star
 }
 ~~~
 
-## Serving Credentials {#serve-credentials}
+## Providing a Credential Challenge {#serve-credentials}
 
 In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object:
 
@@ -177,7 +224,9 @@ A non-normative example of an interaction completion response body is below.
 }
 ~~~
 
-## Verifying Authentication Assertion {#verifying-authentication}
+Since the signature is in response to a challenge provided by the AS, the client instance MUST NOT send this parameter to a new grant request. The grant request MUST be in the _pending_ state when this parameter is sent to the AS.
+
+# Verifying Authentication Assertion {#verifying-authentication}
 
 When the AS receives the `public_key_cred` value in a grant continuation request, the AS MUST perform the steps specified in Section 8.1 of {{SPC}}. The AS MUST decode each property of the public key credential in the response using base64url before performing the verification.
 
@@ -194,14 +243,16 @@ TODO Security
 
 # IANA Considerations
 
-## Interaction Start
+IANA is requested to register the following values into the named registries.
+
+## Interaction Start Modes
 
 IANA is requested to register the following modes into the Interaction Start Modes registry defined by {{GNAP}}.
 
 |Mode|Type|Specification document(s)|
 |spc|string|{{request-credentials}} of {{&SELF}}|
 
-## Interaction Finish Mode
+## Interaction Finish Methods
 
 IANA is requested to register the following methods into the Interaction Finish Methods registry defined by {{GNAP}}.
 
@@ -224,7 +275,7 @@ TODO acknowledge.
 
 --- back
 
-# Checking Feature Support
+# Checking Feature Support {#detect-spc}
 
 This extension only works if the end user's user agent supports the Payment Request API {{PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
 
