@@ -59,27 +59,27 @@ A method for detecting this capability in the client software is provided in {{d
 
 # Secure Payment Confirmation Interaction
 
-When using SPC in {{GNAP}}, the end user is prompted to authenticate during the interaction phase of the protocol, when the grant is in the _pending_ state. 
+When using SPC in {{GNAP}}, the end user is prompted to authenticate during the interaction phase of the protocol, when the grant is in the _pending_ state.
 
 The overall flow of the protocol is shown here:
 
 ~~~ aasvg
-+--------+                                  +--------+         
-| Client |                                  |   AS   |         
++--------+                                  +--------+
+| Client |                                  |   AS   |
 |Instance|                                  |        |
-|        |                                  |        | 
-|        +--(1)--- Request Access --------->|        | 
-|        |                                  |        | 
-|        |<-(2)-- Interaction Needed -------+        | 
-|        |                                  |        | 
-|        |           .----.                 |        | 
-|        |          | End  |                |        | 
-|        |          | User |                |        | 
-|        |<==(3)===>|------+                |        | 
-|        |   SPC    |  RO  |                |        | 
-|        |          |      |                |        | 
-|        |           `----`                 |        | 
-|        |                                  |        | 
+|        |                                  |        |
+|        +--(1)--- Request Access --------->|        |
+|        |                                  |        |
+|        |<-(2)-- Interaction Needed -------+        |
+|        |                                  |        |
+|        |           .----.                 |        |
+|        |          | End  |                |        |
+|        |          | User |                |        |
+|        |<==(3)===>|------+                |        |
+|        |   SPC    |  RO  |                |        |
+|        |          |      |                |        |
+|        |           `----`                 |        |
+|        |                                  |        |
 |        +--(4)--- Continue Request ------->|        |
 |        |                                  |        |
 |        |                              ,---+        |
