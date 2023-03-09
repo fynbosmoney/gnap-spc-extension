@@ -16,9 +16,6 @@ keyword:
  - extension
 venue:
   group: "Grant Negotiation and Authorization Protocol"
-  type: "Working Group"
-  mail: "txauth@ietf.org"
-  arch: "https://mailarchive.ietf.org/arch/browse/txauth/"
   github: "fynbos-dev/gnap-spc-extension"
   latest: "https://fynbos-dev.github.io/gnap-spc-extension/draft-ozdemir-gnap-spc-extension.html"
 
@@ -33,27 +30,254 @@ author:
     email: adrian@fynbos.dev
 
 normative:
-  I-D.ietf-gnap-core-protocol-12: GNAP
-  W3C.secure-payment-confirmation: SPC
-  W3C.webauthn-3: WebAuthn
+  GNAP: I-D.ietf-gnap-core-protocol
+  SPC: W3C.secure-payment-confirmation
+  WebAuthn: W3C.webauthn-3
 
 informative:
-  W3C.payment-request-1.1: PaymentRequest
+  PaymentRequest: W3C.payment-request-1.1
 
+entity:
+  SELF: "RFC nnnn"
 
 --- abstract
 
-GNAP Secure Payment Confirmation (SPC) Extension is a GNAP extension that defines a method for authentication of the end user during a payment transaction. This extension helps leverage hardware and software authenticators such as biometric scanners while authenticating the end user.
+GNAP Secure Payment Confirmation (SPC) Extension is a Grant Negotiation and Authorization Protocol ({{GNAP}}) extension that defines a method for authentication of the end user during a payment transaction. This extension helps leverage hardware and software authenticators such as biometric scanners while authenticating the end user.
 
 --- middle
 
 # Introduction
 
-GNAP Secure Payment Confirmation Extension is an extension developed on top of the Grant Negotiation and Agreement Protocol {{-GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation (SPC){{-SPC}}. This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating during a GNAP interaction.
+GNAP Secure Payment Confirmation Extension is an extension developed on top of the Grant Negotiation and Agreement Protocol {{GNAP}}. It defines a method for authentication of the end user during a payment transaction using Secure Payment Confirmation ({{SPC}}). This extension helps leverage authenticators such as fingerprint scanners, facial recognition systems, etc. while authenticating during a GNAP interaction.
 
-# Checking Feature Support
+A method for detecting this capability in the client software is provided in {{detect-spc}}.
 
-This extension only works if the end user's user agent supports the Payment Request API {{-PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
+## Conventions and Definitions
+
+{::boilerplate bcp14-tagged}
+
+
+# Secure Payment Confirmation Interaction
+
+When using SPC in {{GNAP}}, the end user is prompted to authenticate during the interaction phase of the protocol, when the grant is in the _pending_ state.
+
+The overall flow of the protocol is shown here:
+
+~~~ aasvg
++--------+                                  +--------+
+| Client |                                  |   AS   |
+|Instance|                                  |        |
+|        |                                  |        |
+|        +--(1)--- Request Access --------->|        |
+|        |                                  |        |
+|        |<-(2)-- Interaction Needed -------+        |
+|        |                                  |        |
+|        |           .----.                 |        |
+|        |          | End  |                |        |
+|        |          | User |                |        |
+|        |<==(3)===>|------+                |        |
+|        |   SPC    |  RO  |                |        |
+|        |          |      |                |        |
+|        |           `----`                 |        |
+|        |                                  |        |
+|        +--(4)--- Continue Request ------->|        |
+|        |                                  |        |
+|        |                              ,---+        |
+|        |                         (5) |    |        |
+|        |                         SPC  `-->|        |
+|        |                                  |        |
+|        |<-(6)----- Grant Access ----------+        |
+|        |                                  |        |
++--------+                                  +--------+
+~~~
+
+1. The client instance makes a grant request to the AS, indicating that it can support SPC as an interaction start method. The client instance includes an identifier for the intended end user in the request. The client instance does not include an interaction finish method, since the interaction will happen outside of the AS and the client software will not need to be signaled by the AS to continue the grant request. ({{request-credentials}})
+
+2. The AS creates a new grant request in the _pending_ state and responds to the grant request with a challenge to be signed by a set of candidate credentials. ({{serve-credentials}})
+
+3. The client instance engages the SPC protocol to sign the challenge. ({{authenticate-user}})
+
+4. The client instance continues the grant request, including the results of the SPC challenge response from (3) in the grant continuation request. ({{complete-interaction}})
+
+5. The AS validates the signature, completing the SPC process and placing the grant in the _approved_ state. ({{verifying-authentication}})
+
+6. The AS returns an access token in a standard GNAP grant response.
+
+
+The end user provides confirmation using their credential, which the client instance presents back to the AS in a continuation response. The AS then verifies this confirmation in order to process the grant request and grant access to the client instance.
+
+
+## Requesting Credentials {#request-credentials}
+
+A client instance that is able to use SPC for user interaction can request a grant from an authorization server with SPC as an interaction start method.
+
+The SPC interaction start method is defined as a string type with value `spc`. If the `spc` interaction start method is accepted, the corresponding response is returned as discussed in {{serve-credentials}}.
+
+When requesting the SPC interaction method the client MUST identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user. If the `user` property is not included in the request, the AS MUST NOT enable this interaction mode for this request.
+
+A non-normative example of a grant request that uses SPC as its interaction start method is below.
+
+~~~ json
+"access_token": {
+  "access": [{
+    "type": "outgoing-payment",
+    "actions": [
+      "create",
+    ],
+  }]
+},
+"client": {
+    "key": {
+      "proof": "httpsig",
+      "jwk": {
+        "alg": "EdDSA",
+        "kty": "OKP",
+        "use": "sig",
+        "crv": "Ed25519",
+        "kid": "xyz-1",
+        "x": "jfiusdhvherui..."
+        }
+    }
+  },
+"interact": {
+  "start": [
+    "spc"
+  ]
+},
+"user": {
+  "sub_ids": [{
+    "subject_type": "email",
+    "email": "user@example.com"
+  }]
+}
+~~~
+
+## Providing a Credential Challenge {#serve-credentials}
+
+In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object:
+
+`spc` (object):
+: An object containing parameters required for performing secure payment confirmation on the end user's device. REQUIRED if the AS is allowing SPC interaction for this request.
+
+This object contains the following properties:
+
+`credential_ids` (array of strings):
+: A list of identifiers of credentials that could potentially be used to respond to this interaction mode. Each credential identifier MUST be base64url encoded with no padding. REQUIRED.
+
+`challenge` (string):
+: A random challenge that the relying party generates on the server side to prevent replay attacks. The challenge MUST be base64url encoded with no padding. REQUIRED.
+
+A non-normative example of a grant request continue response that uses SPC as its interaction method is below.
+
+~~~ json
+{
+  "interact": {
+    "spc": {
+      "credential_ids": ["MTIzMjMxMzIyMz..."],
+      "challenge": "dGhpcyBpcyBh..."
+    }
+  },
+  "continue": {
+    "access_token": {
+      "value": "80UPRY5NM33OMUKMKSKU"
+    },
+    "uri": "http://wallet.com/adrian/continue/5e69f364-b14d-4fdf-8b6b-3b6ffb52c339"
+  }
+}
+~~~
+
+## Authenticating User {#authenticate-user}
+
+When the client instance receives an `spc` interaction response from the AS, the client instance SHOULD initiate the authentication ceremony performing the steps as specified in {{SPC}}. When performing this ceremony, the client instance decodes the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API. When the authentication ceremony is complete, the client instance will have access to the response data from the ceremony to be returned to the AS.
+
+## Completing Interaction {#complete-interaction}
+
+Once the authentication ceremony is complete, the client instance continues the grant request by calling the grant continuation URI. The client instance includes a body in the grant continuation request including a field named `public_key_cred`:
+
+`public_key_cred` (object):
+: The results of the SPC authentication ceremony in response to the AS, to be used by the AS to authorize the request.
+
+The `public_key_cred` object contains the following fields as defined by the Web Authentication Assertion object {{WebAuthn}}:
+
+`clientDataJSON` (string):
+: `clientDataJSON` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
+
+`authenticatorData` (string):
+: `authenticatorData` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
+
+`signature` (string):
+: `signature` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
+
+`userHandle` (string):
+: `userHandle` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **OPTIONAL**.
+
+A non-normative example of an interaction completion response body is below.
+
+~~~ json
+{
+  "public_key_cred": {
+    "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
+    "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
+    "signature": "c2lnbmF0dXJlIGV4YW...",
+    "userHandle": "dXNlckhhbmRsZSBleG..."
+  }
+}
+~~~
+
+Since the signature is in response to a challenge provided by the AS, the client instance MUST NOT send this parameter to a new grant request. The grant request MUST be in the _pending_ state when this parameter is sent to the AS.
+
+# Verifying Authentication Assertion {#verifying-authentication}
+
+When the AS receives the `public_key_cred` value in a grant continuation request, the AS MUST perform the steps specified in Section 8.1 of {{SPC}}. The AS MUST decode each property of the public key credential in the response using base64url before performing the verification.
+
+The grant request MUST be in the _pending_ state when this parameter is received in order for it to be processed. If the grant request is in any other state, the AS MUST return an error.
+
+The AS MUST ensure that the transaction details encoded in the public key credential match the details of the transaction that the client instance is requesting a grant to perform.
+
+If the AS determines that the authorization is sufficient, the AS grants access tokens and releases subject information to the client instance.
+
+# Security Considerations
+
+TODO Security
+
+
+# IANA Considerations
+
+IANA is requested to register the following values into the named registries.
+
+## Interaction Start Modes
+
+IANA is requested to register the following modes into the Interaction Start Modes registry defined by {{GNAP}}.
+
+|Mode|Type|Specification document(s)|
+|spc|string|{{request-credentials}} of {{&SELF}}|
+
+## Interaction Mode Responses
+
+IANA is requested to register the following methods into the Interaction Mode Responses registry defined by {{GNAP}}.
+
+|Name|Specification document(s)|
+|spc|{{serve-credentials}} of {{&SELF}}|
+
+
+## Grant Request Parameters
+
+IANA is requested to register the following parameters into the Grant Request Parameters registry defined by {{GNAP}}.
+
+|Name|Type|Specification document(s)|
+|public_key_cred|object|{{complete-interaction}} of {{&SELF}}|
+
+
+# Acknowledgments
+{:numbered="false"}
+
+TODO acknowledge.
+
+--- back
+
+# Checking Feature Support {#detect-spc}
+
+This extension only works if the end user's user agent supports the Payment Request API {{PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
 
 The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.
 
@@ -103,134 +327,3 @@ const isSecurePaymentConfirmationSupported = async () => {
 };
 ~~~
 
-# Requesting Credentials
-
-A client that is able to use SPC for user interaction can request a grant from an authorization server with SPC as its preferred interaction start method.
-
-This document defines `spc` as a new accepted value for the `start` field in the `interact` object. When requesting the SPC interaction method the client **MUST** identify the end user using the `user` property in the grant request object to allow the AS to find the registered credentials for the user.
-
-A non-normative example of a grant request that uses SPC as its interaction start method is below.
-
-~~~ json
-"access_token": {
-  "access": [{
-    "type": "outgoing-payment",
-    "actions": [
-      "create",
-    ],
-  }]
-},
-"client": {
-    "key": {
-      "proof": "httpsig",
-      "jwk": {
-        "alg": "EdDSA",
-        "kty": "OKP",
-        "use": "sig",
-        "crv": "Ed25519",
-        "kid": "xyz-1",
-        "x": "jfiusdhvherui..."
-        }
-    }
-  },
-"interact": {
-  "start": [
-    "spc"
-  ]
-},
-"user": {
-  "sub_ids": [{
-    "subject_type": "email",
-    "email": "user@example.com"
-  }]
-}
-~~~
-
-# Serving Credentials
-
-In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object. This field contains an object with the following properties.
-
-`credential_ids` (array of strings):
-: Each credential MUST be base64url encoded. **REQUIRED**
-
-`challenge` (string):
-: A random challenge that the relying party generates on the server side to prevent replay attacks. The challenge MUST be base64url encoded. **REQUIRED**.
-
-A non-normative example of a grant request continue response that uses SPC as its interaction method is below.
-
-~~~ json
-{
-  "interact": {
-    "spc": {
-      "credential_ids": ["MTIzMjMxMzIyMz..."],
-      "challenge": "dGhpcyBpcyBh..."
-    }
-  },
-  "continue": {
-    "access_token": {
-      "value": "80UPRY5NM33OMUKMKSKU"
-    },
-    "uri": "http://wallet.com/adrian/continue/5e69f364-b14d-4fdf-8b6b-3b6ffb52c339"
-  }
-}
-~~~
-
-# Authenticating User
-In response to the AS's grant request response, the client should initiate the authentication ceremony performing the steps as specified in {{-SPC}}. The client instance should decode the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API.
-
-# Completing Interaction
-The client completes the interaction by posting the output of the SPC authentication ceremony to the grant continuation URI. The body of the continuation request is an object with a single property `public_key_cred`.
-
-The client **MUST** encode each property of the Web Authentication Assertion object {{-WebAuthn}} returned from a successful authentication ceremony using base64url and store these as properties of the `public_key_cred` object.
-
-`clientDataJSON` (string):
-: `clientDataJSON` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
-
-`authenticatorData` (string):
-: `authenticatorData` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
-
-`signature` (string):
-: `signature` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
-
-`userHandle` (string):
-: `userHandle` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **OPTIONAL**.
-
-A non-normative example of an interaction completion response body is below.
-
-~~~ json
-{
-  "public_key_cred": {
-    "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
-    "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
-    "signature": "c2lnbmF0dXJlIGV4YW...",
-    "userHandle": "dXNlckhhbmRsZSBleG..."
-  }
-}
-~~~
-
-# Verifying Authentication Assertion
-In order to complete authentication ceremony and authenticate the end user, the AS **MUST** perform the steps specified in Section 8.1 of Secure Payment Confirmation. The AS should decode each property of the public key credential in the response using base64url before performing the verification.
-
-The AS MUST ensure that the transaction details encoded in the public key credential match the details of the transaction that the client is requesting a grant to perform.
-
-# Conventions and Definitions
-
-{::boilerplate bcp14-tagged}
-
-
-# Security Considerations
-
-TODO Security
-
-
-# IANA Considerations
-
-This document has no IANA actions.
-
-
---- back
-
-# Acknowledgments
-{:numbered="false"}
-
-TODO acknowledge.
