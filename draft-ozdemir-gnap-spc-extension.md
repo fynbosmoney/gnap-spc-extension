@@ -252,11 +252,11 @@ IANA is requested to register the following modes into the Interaction Start Mod
 |Mode|Type|Specification document(s)|
 |spc|string|{{request-credentials}} of {{&SELF}}|
 
-## Interaction Finish Methods
+## Interaction Mode Responses
 
-IANA is requested to register the following methods into the Interaction Finish Methods registry defined by {{GNAP}}.
+IANA is requested to register the following methods into the Interaction Mode Responses registry defined by {{GNAP}}.
 
-|Mode|Specification document(s)|
+|Name|Specification document(s)|
 |spc|{{serve-credentials}} of {{&SELF}}|
 
 
