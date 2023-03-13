@@ -5,7 +5,7 @@
 Grant Negotiation and Authorization Protocol               O. T. Ozdemir
 Internet-Draft                                            A. Hope-Bailie
 Intended status: Informational                                    Fynbos
-Expires: 10 September 2023                                  9 March 2023
+Expires: 14 September 2023                                 13 March 2023
 
 
                GNAP Secure Payment Confirmation Extension
@@ -47,7 +47,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 10 September 2023.
+   This Internet-Draft will expire on 14 September 2023.
 
 Copyright Notice
 
@@ -189,26 +189,9 @@ Table of Contents
    interaction start method is below.
 
    "access_token": {
-     "access": [{
-       "type": "outgoing-payment",
-       "actions": [
-         "create",
-       ],
-     }]
+     "access": ["make-payment"]
    },
-   "client": {
-       "key": {
-         "proof": "httpsig",
-         "jwk": {
-           "alg": "EdDSA",
-           "kty": "OKP",
-           "use": "sig",
-           "crv": "Ed25519",
-           "kid": "xyz-1",
-           "x": "jfiusdhvherui..."
-           }
-       }
-     },
+   "client": "xyz-client-1234a",
    "interact": {
      "start": [
        "spc"
@@ -225,7 +208,14 @@ Table of Contents
 
    In response to a client instance’s grant request, if the AS
    determines that it has a registered SPC credential of the end user,
-   the AS responds with an spc field in the interact object:
+   the AS responds with an spc field in the interact object.
+
+   The AS determines the end user using user property from the grant
+   request. user property should have the required information such as
+   email addresses, usernames, etc. for determining the end user, see
+   Section 2.4 of [GNAP].  If the user property is not included in the
+   request, it is not possible for the AS to determine the credentials
+   for the end user.
 
    spc (object):  An object containing parameters required for
       performing secure payment confirmation on the end user's device.
@@ -264,12 +254,22 @@ Table of Contents
 
    When the client instance receives an spc interaction response from
    the AS, the client instance SHOULD initiate the authentication
-   ceremony performing the steps as specified in [SPC].  When performing
-   this ceremony, the client instance decodes the challenge and each
-   credential from credential_ids using base64url and convert them to a
-   buffer for input into the browser API.  When the authentication
-   ceremony is complete, the client instance will have access to the
-   response data from the ceremony to be returned to the AS.
+   ceremony following Section 4 of [SPC].
+
+   When performing this ceremony, the client instance decodes the
+   challenge and each credential from credential_ids using base64url and
+   convert them to a buffer for input into the browser API.  When the
+   authentication ceremony is complete, the client instance will have
+   access to the response data from the ceremony to be returned to the
+   AS.
+
+   Each credential id in credential_ids property the AS provided is
+   registered by the end user in the past.  When the client initates the
+   authentication ceremony, the browser API is going to check if the
+   device has at least one of the credential ids and continue to the
+   authentication ceremony only if the device has one of the
+   credentials.  In this phase, the credential that end user choose as
+   authentication method is going to be used for signing the cryptogram.
 
 2.4.  Completing Interaction
 
@@ -299,7 +299,7 @@ Table of Contents
 
    userHandle (string):  userHandle property from Web Authentication
       Assertion object.  This *MUST* be encoded using base64url.
-      *OPTIONAL*.
+      *REQUIRED*.
 
    A non-normative example of an interaction completion response body is
    below.
@@ -322,9 +322,12 @@ Table of Contents
 
    When the AS receives the public_key_cred value in a grant
    continuation request, the AS MUST perform the steps specified in
-   Section 8.1 of [SPC].  The AS MUST decode each property of the public
-   key credential in the response using base64url before performing the
-   verification.
+   Section 8.1 of [SPC].  Each property of a public key credential
+   returned successful invocation of the SPC handler clientDataJSON,
+   authenticatorData, signature and userHandle MUST be present as
+   expected for starting verification.  The AS MUST decode each property
+   of the public key credential in the response using base64url before
+   performing the verification.
 
    The grant request MUST be in the _pending_ state when this parameter
    is received in order for it to be processed.  If the grant request is
