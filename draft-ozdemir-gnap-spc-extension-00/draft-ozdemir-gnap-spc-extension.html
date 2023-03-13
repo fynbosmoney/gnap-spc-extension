@@ -1371,7 +1371,7 @@ appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">�
         <h3 id="name-providing-a-credential-chal">
 <a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-providing-a-credential-chal" class="section-name selfRef">Providing a Credential Challenge</a>
         </h3>
-<p id="section-2.2-1">In response to a client instance’s grant request, if the AS determines that it has one or more registered SPC credentials of the end user, the AS responds with an <code>spc</code> field in the <code>interact</code> object.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+<p id="section-2.2-1">In response to a client instance's grant request, if the AS determines that it has one or more registered SPC credentials of the end user, the AS responds with an <code>spc</code> field in the <code>interact</code> object.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
 <p id="section-2.2-2">The AS determines the end user using the <code>user</code> property from the grant request. The <code>user</code> property should have the required information such as email addresses, usernames, etc. for determining the end user, see <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-gnap-core-protocol-13#section-2.4" class="relref">Section 2.4</a> of [<a href="#GNAP" class="cite xref">GNAP</a>]</span>. If the <code>user</code> property is not included in the request, it is not possible for the AS to determine the credentials for the end user.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-2.2-3">
           <dt id="section-2.2-3.1">
@@ -1683,7 +1683,7 @@ appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">�
       <h2 id="name-checking-feature-support">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-checking-feature-support" class="section-name selfRef">Checking Feature Support</a>
       </h2>
-<p id="appendix-A-1">This extension only works if the end user's user agent supports the Payment Request API <span>[<a href="#PaymentRequest" class="cite xref">PaymentRequest</a>]</span> and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to <code>canMakePayment()</code>.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">This extension only works if the end user's user agent supports the Payment Request API <span>[<a href="#PaymentRequest" class="cite xref">PaymentRequest</a>]</span> and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to <code>canMakePayment()</code>.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <p id="appendix-A-2">The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <div class="lang-javascript sourcecode" id="appendix-A-3">
 <pre>
