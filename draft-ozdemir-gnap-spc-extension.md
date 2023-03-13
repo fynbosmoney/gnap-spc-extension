@@ -198,7 +198,7 @@ The `public_key_cred` object contains the following fields as defined by the Web
 : `signature` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
 
 `userHandle` (string):
-: `userHandle` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **OPTIONAL**.
+: `userHandle` property from Web Authentication Assertion object. This **MUST** be encoded using base64url. **REQUIRED**.
 
 A non-normative example of an interaction completion response body is below.
 
@@ -217,7 +217,7 @@ Since the signature is in response to a challenge provided by the AS, the client
 
 # Verifying Authentication Assertion {#verifying-authentication}
 
-When the AS receives the `public_key_cred` value in a grant continuation request, the AS MUST perform the steps specified in Section 8.1 of {{SPC}}. The AS MUST decode each property of the public key credential in the response using base64url before performing the verification.
+When the AS receives the `public_key_cred` value in a grant continuation request, the AS MUST perform the steps specified in Section 8.1 of {{SPC}}. Each property of a public key credential returned successful invocation of the SPC handler `clientDataJSON`, `authenticatorData`, `signature` and `userHandle` MUST be present as expected for starting verification. The AS MUST decode each property of the public key credential in the response using base64url before performing the verification.
 
 The grant request MUST be in the _pending_ state when this parameter is received in order for it to be processed. If the grant request is in any other state, the AS MUST return an error.
 
