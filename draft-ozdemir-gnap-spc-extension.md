@@ -177,7 +177,7 @@ When the client instance receives an `spc` interaction response from the AS, the
 
 When performing this ceremony, the client instance decodes the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API. When the authentication ceremony is complete, the client instance will have access to the response data from the ceremony to be returned to the AS.
 
-Each credential id in `credential_ids` property the AS provided is registered by the end user in the past. When the client initates the authentication ceremony, the browser API is going to check if the device has at least one of the credential ids.
+Each credential id in `credential_ids` property the AS provided is registered by the end user in the past. When the client initates the authentication ceremony, the browser API is going to check if the device has at least one of the credential ids and continue to the authentication ceremony only if the device has one of the credentials. In this phase, the credential that end user choose as authentication method is going to be used for signing the cryptogram.
 
 ## Completing Interaction {#complete-interaction}
 
