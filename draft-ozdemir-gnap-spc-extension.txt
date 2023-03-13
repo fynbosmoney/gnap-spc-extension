@@ -95,6 +95,11 @@ Table of Contents
    facial recognition systems, etc. while authenticating during a GNAP
    interaction.
 
+   Secure Payment Confirmation ([SPC]) is a Web Platform API implemented
+   in Web browsers which allows a website to invoke [WebAuthn] to both
+   authenticate the end user and confirm the details of the payment
+   during a payment transaction.
+
    A method for detecting this capability in the client software is
    provided in Appendix A.
 
@@ -150,7 +155,9 @@ Table of Contents
 
    2.  The AS creates a new grant request in the _pending_ state and
        responds to the grant request with a challenge to be signed by a
-       set of candidate credentials.  (Section 2.2)
+       set of candidate credentials that are known to have been
+       provisioned for the end user identified by the client.
+       (Section 2.2)
 
    3.  The client instance engages the SPC protocol to sign the
        challenge.  (Section 2.3)
@@ -207,12 +214,12 @@ Table of Contents
 2.2.  Providing a Credential Challenge
 
    In response to a client instance’s grant request, if the AS
-   determines that it has a registered SPC credential of the end user,
-   the AS responds with an spc field in the interact object.
+   determines that it has one or more registered SPC credentials of the
+   end user, the AS responds with an spc field in the interact object.
 
-   The AS determines the end user using user property from the grant
-   request. user property should have the required information such as
-   email addresses, usernames, etc. for determining the end user, see
+   The AS determines the end user using the user property from the grant
+   request.  The user property should have the required information such
+   as email addresses, usernames, etc. for determining the end user, see
    Section 2.4 of [GNAP].  If the user property is not included in the
    request, it is not possible for the AS to determine the credentials
    for the end user.
@@ -228,9 +235,32 @@ Table of Contents
       interaction mode.  Each credential identifier MUST be base64url
       encoded with no padding.  REQUIRED.
 
-   challenge (string):  A random challenge that the relying party
-      generates on the server side to prevent replay attacks.  The
+   challenge (string):  A random challenge that the relying party (the
+      AS) generates on the server side to prevent replay attacks.  The
       challenge MUST be base64url encoded with no padding.  REQUIRED.
+
+   payment_instrument (object):  An object describing the payment
+      instrument which will be used to execute the payment.  REQUIRED.
+
+   The payment instrument object has the following properties:
+
+   display_name (string):  A display name to use in the SPC user
+      interface.  REQUIRED.
+
+   icon (string):  The URL of an icon to display in the SCP user
+      interface.  The URL may either identify an image on an internet-
+      accessible server (e.g., https://bank.com/card.png), or directly
+      encode the icon data via a Data URL [rfc2397].  Between the two
+      types of URLs, Data URLs offer several benefits to the Relying
+      Party.  They can improve reliability (e.g., in the case that the
+      icon hosting server may be unavailable).  They can also enhance
+      validation because the Relying Party has cryptographic evidence of
+      what the browser displayed to the user: the icon URL is signed as
+      part of the authentication ceremony.REQUIRED.
+
+   icon_must_be_shown (boolean):  Indicates whether the specified icon
+      must be successfully fetched and shown for the request to succeed.
+      Defaults to TRUE if not provided.  OPTIONAL.
 
    A non-normative example of a grant request continue response that
    uses SPC as its interaction method is below.
@@ -239,14 +269,19 @@ Table of Contents
      "interact": {
        "spc": {
          "credential_ids": ["MTIzMjMxMzIyMz..."],
-         "challenge": "dGhpcyBpcyBh..."
+         "challenge": "dGhpcyBpcyBh...",
+         "payment_instrument" : {
+           "display_name": "Card ending in 4242",
+           "icon": "https://wallet.example/card-art.png",
+           "icon_must_be_shown": true
+         }
        }
      },
      "continue": {
        "access_token": {
          "value": "80UPRY5NM33OMUKMKSKU"
        },
-       "uri": "http://wallet.com/adrian/continue/5e69f364-b14d-4fdf-8b6b-3b6ffb52c339"
+       "uri": "http://wallet.example/continue/5e69f364-b14d-4fdf-8b6b-3b6ffb52c339"
      }
    }
 
@@ -258,18 +293,25 @@ Table of Contents
 
    When performing this ceremony, the client instance decodes the
    challenge and each credential from credential_ids using base64url and
-   convert them to a buffer for input into the browser API.  When the
-   authentication ceremony is complete, the client instance will have
-   access to the response data from the ceremony to be returned to the
-   AS.
+   converts them to a buffer for input into the browser API.
 
-   Each credential id in credential_ids property the AS provided is
-   registered by the end user in the past.  When the client initates the
-   authentication ceremony, the browser API is going to check if the
-   device has at least one of the credential ids and continue to the
-   authentication ceremony only if the device has one of the
-   credentials.  In this phase, the credential that end user choose as
-   authentication method is going to be used for signing the cryptogram.
+   The challenge value is used as the challenge input parameter and the
+   credential_ids value is used as the credentialIds input parameter in
+   the SecurePaymentConfirmationRequest dictionary passed to the browser
+   API.  The instrument input parameter is constructed by copying the
+   display_name, icon, and icon_must_be_shown properties from the
+   payment_instrument object into a new PaymentCredentialInstrument.
+
+   When the client initates the authentication ceremony, the browser API
+   checks if the device has at least one of the credential ids and
+   continues to the authentication ceremony only if the device has one
+   of the credentials.  In this phase, the credential that the end user
+   chooses as the authentication method is going to be used for signing
+   the cryptogram.
+
+   When the authentication ceremony is complete, the client instance
+   will have access to the response data from the ceremony to be
+   returned to the AS.
 
 2.4.  Completing Interaction
 
@@ -285,11 +327,11 @@ Table of Contents
    The public_key_cred object contains the following fields as defined
    by the Web Authentication Assertion object [WebAuthn]:
 
-   clientDataJSON (string):  clientDataJSON property from Web
+   client_data_json (string):  clientDataJSON property from Web
       Authentication Assertion object.  This *MUST* be encoded using
       base64url. *REQUIRED*.
 
-   authenticatorData (string):  authenticatorData property from Web
+   authenticator_data (string):  authenticatorData property from Web
       Authentication Assertion object.  This *MUST* be encoded using
       base64url. *REQUIRED*.
 
@@ -297,7 +339,7 @@ Table of Contents
       Assertion object.  This *MUST* be encoded using base64url.
       *REQUIRED*.
 
-   userHandle (string):  userHandle property from Web Authentication
+   user_handle (string):  userHandle property from Web Authentication
       Assertion object.  This *MUST* be encoded using base64url.
       *REQUIRED*.
 
@@ -306,10 +348,10 @@ Table of Contents
 
    {
      "public_key_cred": {
-       "clientDataJSON": "ZXhhbXBsZSBjbGllbnRkYXR...",
-       "authenticatorData": "YXV0aGVudGljYXRvckRhdGEg...",
+       "client_data_json": "ZXhhbXBsZSBjbGllbnRkYXR...",
+       "authenticator_data": "YXV0aGVudGljYXRvckRhdGEg...",
        "signature": "c2lnbmF0dXJlIGV4YW...",
-       "userHandle": "dXNlckhhbmRsZSBleG..."
+       "user_handle": "dXNlckhhbmRsZSBleG..."
      }
    }
 
@@ -323,11 +365,11 @@ Table of Contents
    When the AS receives the public_key_cred value in a grant
    continuation request, the AS MUST perform the steps specified in
    Section 8.1 of [SPC].  Each property of a public key credential
-   returned successful invocation of the SPC handler clientDataJSON,
-   authenticatorData, signature and userHandle MUST be present as
-   expected for starting verification.  The AS MUST decode each property
-   of the public key credential in the response using base64url before
-   performing the verification.
+   returned following successful invocation of the SPC handler
+   client_data_json, authenticator_data, signature and user_handle MUST
+   be present as expected for starting verification.  The AS MUST decode
+   each property of the public key credential in the response using
+   base64url before performing the verification.
 
    The grant request MUST be in the _pending_ state when this parameter
    is received in order for it to be processed.  If the grant request is
@@ -407,6 +449,10 @@ Normative References
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [rfc2397]  Masinter, L., "The "data" URL scheme", RFC 2397,
+              DOI 10.17487/RFC2397, August 1998,
+              <https://www.rfc-editor.org/rfc/rfc2397>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
