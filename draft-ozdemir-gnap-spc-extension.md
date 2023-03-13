@@ -138,7 +138,7 @@ A non-normative example of a grant request that uses SPC as its interaction star
 
 ## Providing a Credential Challenge {#serve-credentials}
 
-In response to a client instance’s grant request, if the AS determines that it has one or more registered SPC credentials of the end user, the AS responds with an `spc` field in the `interact` object.
+In response to a client instance's grant request, if the AS determines that it has one or more registered SPC credentials of the end user, the AS responds with an `spc` field in the `interact` object.
 
 The AS determines the end user using the `user` property from the grant request. The `user` property should have the required information such as email addresses, usernames, etc. for determining the end user, see {{Section 2.4 of GNAP}}. If the `user` property is not included in the request, it is not possible for the AS to determine the credentials for the end user.
 
@@ -291,7 +291,8 @@ TODO acknowledge.
 
 # Checking Feature Support {#detect-spc}
 
-This extension only works if the end user's user agent supports the Payment Request API {{PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
+This extension only works if the end user's user agent supports the Payment Request API {{PaymentRequest}} and SPC. To detect whether SPC is supported on the browser, the client instance can send a fake call to `canMakePayment()`.
+
 
 The following code provides a feature detect function for the Payment Request API and SPC that could be executed on a merchant's website.
 
