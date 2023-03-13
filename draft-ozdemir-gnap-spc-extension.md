@@ -119,26 +119,9 @@ A non-normative example of a grant request that uses SPC as its interaction star
 
 ~~~ json
 "access_token": {
-  "access": [{
-    "type": "outgoing-payment",
-    "actions": [
-      "create",
-    ],
-  }]
+  "access": ["make-payment"]
 },
-"client": {
-    "key": {
-      "proof": "httpsig",
-      "jwk": {
-        "alg": "EdDSA",
-        "kty": "OKP",
-        "use": "sig",
-        "crv": "Ed25519",
-        "kid": "xyz-1",
-        "x": "jfiusdhvherui..."
-        }
-    }
-  },
+"client": "xyz-client-1234a",
 "interact": {
   "start": [
     "spc"
@@ -154,7 +137,9 @@ A non-normative example of a grant request that uses SPC as its interaction star
 
 ## Providing a Credential Challenge {#serve-credentials}
 
-In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object:
+In response to a client instance’s grant request, if the AS determines that it has a registered SPC credential of the end user, the AS responds with an `spc` field in the `interact` object.
+
+The AS determines the end user using `user` property from the grant request. `user` property should have the required information such as email addresses, usernames, etc. for determining the end user, see {{Section 2.4 of GNAP}}. If the `user` property is not included in the request, it is not possible for the AS to determine the credentials for the end user.
 
 `spc` (object):
 : An object containing parameters required for performing secure payment confirmation on the end user's device. REQUIRED if the AS is allowing SPC interaction for this request.
@@ -188,7 +173,11 @@ A non-normative example of a grant request continue response that uses SPC as it
 
 ## Authenticating User {#authenticate-user}
 
-When the client instance receives an `spc` interaction response from the AS, the client instance SHOULD initiate the authentication ceremony performing the steps as specified in {{SPC}}. When performing this ceremony, the client instance decodes the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API. When the authentication ceremony is complete, the client instance will have access to the response data from the ceremony to be returned to the AS.
+When the client instance receives an `spc` interaction response from the AS, the client instance SHOULD initiate the authentication ceremony following Section 4 of {{SPC}}.
+
+When performing this ceremony, the client instance decodes the `challenge` and each credential from `credential_ids` using base64url and convert them to a buffer for input into the browser API. When the authentication ceremony is complete, the client instance will have access to the response data from the ceremony to be returned to the AS.
+
+Each credential id in `credential_ids` property the AS provided is registered by the end user in the past. When the client initates the authentication ceremony, the browser API is going to check if the device has at least one of the credential ids.
 
 ## Completing Interaction {#complete-interaction}
 
