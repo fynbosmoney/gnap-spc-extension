@@ -1423,7 +1423,7 @@ appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">�
         </h3>
 <p id="section-2.3-1">When the client instance receives an <code>spc</code> interaction response from the AS, the client instance <span class="bcp14">SHOULD</span> initiate the authentication ceremony following Section 4 of <span>[<a href="#SPC" class="cite xref">SPC</a>]</span>.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 <p id="section-2.3-2">When performing this ceremony, the client instance decodes the <code>challenge</code> and each credential from <code>credential_ids</code> using base64url and convert them to a buffer for input into the browser API. When the authentication ceremony is complete, the client instance will have access to the response data from the ceremony to be returned to the AS.<a href="#section-2.3-2" class="pilcrow">¶</a></p>
-<p id="section-2.3-3">Each credential id in <code>credential_ids</code> property the AS provided is registered by the end user in the past. When the client initates the authentication ceremony, the browser API is going to check if the device has at least one of the credential ids.<a href="#section-2.3-3" class="pilcrow">¶</a></p>
+<p id="section-2.3-3">Each credential id in <code>credential_ids</code> property the AS provided is registered by the end user in the past. When the client initates the authentication ceremony, the browser API is going to check if the device has at least one of the credential ids and continue to the authentication ceremony only if the device has one of the credentials. In this phase, the credential that end user choose as authentication method is going to be used for signing the cryptogram.<a href="#section-2.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-interaction">
@@ -1463,7 +1463,7 @@ appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">�
 <dt id="section-2.4-4.7">
 <code>userHandle</code> (string):</dt>
           <dd style="margin-left: 1.5em" id="section-2.4-4.8">
-            <p id="section-2.4-4.8.1"><code>userHandle</code> property from Web Authentication Assertion object. This <strong><span class="bcp14">MUST</span></strong> be encoded using base64url. <strong><span class="bcp14">OPTIONAL</span></strong>.<a href="#section-2.4-4.8.1" class="pilcrow">¶</a></p>
+            <p id="section-2.4-4.8.1"><code>userHandle</code> property from Web Authentication Assertion object. This <strong><span class="bcp14">MUST</span></strong> be encoded using base64url. <strong><span class="bcp14">REQUIRED</span></strong>.<a href="#section-2.4-4.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1490,7 +1490,7 @@ appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">�
       <h2 id="name-verifying-authentication-as">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-verifying-authentication-as" class="section-name selfRef">Verifying Authentication Assertion</a>
       </h2>
-<p id="section-3-1">When the AS receives the <code>public_key_cred</code> value in a grant continuation request, the AS <span class="bcp14">MUST</span> perform the steps specified in Section 8.1 of <span>[<a href="#SPC" class="cite xref">SPC</a>]</span>. The AS <span class="bcp14">MUST</span> decode each property of the public key credential in the response using base64url before performing the verification.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-1">When the AS receives the <code>public_key_cred</code> value in a grant continuation request, the AS <span class="bcp14">MUST</span> perform the steps specified in Section 8.1 of <span>[<a href="#SPC" class="cite xref">SPC</a>]</span>. Each property of a public key credential returned successful invocation of the SPC handler <code>clientDataJSON</code>, <code>authenticatorData</code>, <code>signature</code> and <code>userHandle</code> <span class="bcp14">MUST</span> be present as expected for starting verification. The AS <span class="bcp14">MUST</span> decode each property of the public key credential in the response using base64url before performing the verification.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <p id="section-3-2">The grant request <span class="bcp14">MUST</span> be in the <em>pending</em> state when this parameter is received in order for it to be processed. If the grant request is in any other state, the AS <span class="bcp14">MUST</span> return an error.<a href="#section-3-2" class="pilcrow">¶</a></p>
 <p id="section-3-3">The AS <span class="bcp14">MUST</span> ensure that the transaction details encoded in the public key credential match the details of the transaction that the client instance is requesting a grant to perform.<a href="#section-3-3" class="pilcrow">¶</a></p>
 <p id="section-3-4">If the AS determines that the authorization is sufficient, the AS grants access tokens and releases subject information to the client instance.<a href="#section-3-4" class="pilcrow">¶</a></p>

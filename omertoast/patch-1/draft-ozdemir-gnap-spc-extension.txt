@@ -266,7 +266,10 @@ Table of Contents
    Each credential id in credential_ids property the AS provided is
    registered by the end user in the past.  When the client initates the
    authentication ceremony, the browser API is going to check if the
-   device has at least one of the credential ids.
+   device has at least one of the credential ids and continue to the
+   authentication ceremony only if the device has one of the
+   credentials.  In this phase, the credential that end user choose as
+   authentication method is going to be used for signing the cryptogram.
 
 2.4.  Completing Interaction
 
@@ -296,7 +299,7 @@ Table of Contents
 
    userHandle (string):  userHandle property from Web Authentication
       Assertion object.  This *MUST* be encoded using base64url.
-      *OPTIONAL*.
+      *REQUIRED*.
 
    A non-normative example of an interaction completion response body is
    below.
@@ -319,9 +322,12 @@ Table of Contents
 
    When the AS receives the public_key_cred value in a grant
    continuation request, the AS MUST perform the steps specified in
-   Section 8.1 of [SPC].  The AS MUST decode each property of the public
-   key credential in the response using base64url before performing the
-   verification.
+   Section 8.1 of [SPC].  Each property of a public key credential
+   returned successful invocation of the SPC handler clientDataJSON,
+   authenticatorData, signature and userHandle MUST be present as
+   expected for starting verification.  The AS MUST decode each property
+   of the public key credential in the response using base64url before
+   performing the verification.
 
    The grant request MUST be in the _pending_ state when this parameter
    is received in order for it to be processed.  If the grant request is
