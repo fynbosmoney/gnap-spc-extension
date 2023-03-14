@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2023-03-12T00:57:51.097141+00:00",
+  "timestamp": "2023-03-14T00:47:38.677757+00:00",
   "repo": "fynbos-dev/gnap-spc-extension",
   "labels": [
     {
@@ -120,6 +120,76 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 3,
+      "id": "PR_kwDOI1pK9c5L3-HR",
+      "title": "Add some details after feedback",
+      "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/3",
+      "state": "MERGED",
+      "author": "omertoast",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2023-03-13T09:51:41Z",
+      "updatedAt": "2023-03-13T12:36:58Z",
+      "baseRepository": "fynbos-dev/gnap-spc-extension",
+      "baseRefName": "main",
+      "baseRefOid": "e335480b73e4ee99292e8fdc975858fc573727d0",
+      "headRepository": "fynbos-dev/gnap-spc-extension",
+      "headRefName": "omertoast/patch-1",
+      "headRefOid": "ab14e2bf988ab0dd047a4ff66eff1e84d4b8ae1a",
+      "closedAt": "2023-03-13T12:29:41Z",
+      "mergedAt": "2023-03-13T12:29:41Z",
+      "mergedBy": "adrianhopebailie",
+      "mergeCommit": {
+        "oid": "a51fe2b06c21b1d88ac694ab4264769bee4b7d60"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOI1pK9c5PsDA8",
+          "commit": {
+            "abbreviatedOid": "ab14e2b"
+          },
+          "author": "adrianhopebailie",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2023-03-13T12:29:35Z",
+          "updatedAt": "2023-03-13T12:29:35Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "PR_kwDOI1pK9c5L6HK-",
+      "title": "remove non-ascii characters",
+      "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/4",
+      "state": "MERGED",
+      "author": "omertoast",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2023-03-13T15:40:43Z",
+      "updatedAt": "2023-03-13T15:41:46Z",
+      "baseRepository": "fynbos-dev/gnap-spc-extension",
+      "baseRefName": "main",
+      "baseRefOid": "797702a181bd86d6fa110c0618c27ca0c76ab493",
+      "headRepository": "fynbos-dev/gnap-spc-extension",
+      "headRefName": "omertoast/patch-2",
+      "headRefOid": "1ef700ee4a986cf498e5e3d3564e39311a4d56e8",
+      "closedAt": "2023-03-13T15:41:41Z",
+      "mergedAt": "2023-03-13T15:41:41Z",
+      "mergedBy": "omertoast",
+      "mergeCommit": {
+        "oid": "79444120367e8d32774e64dc8a380e935c09e020"
+      },
+      "comments": [],
+      "reviews": []
     }
   ]
 }
