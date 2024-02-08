@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-02-06T00:08:20.395279+00:00",
+  "timestamp": "2024-02-08T00:08:05.112592+00:00",
   "repo": "fynbos-dev/gnap-spc-extension",
   "labels": [
     {
@@ -128,7 +128,7 @@
       "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/3",
       "state": "MERGED",
       "author": "omertoast",
-      "authorAssociation": "MEMBER",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "",
@@ -170,7 +170,7 @@
       "url": "https://github.com/fynbos-dev/gnap-spc-extension/pull/4",
       "state": "MERGED",
       "author": "omertoast",
-      "authorAssociation": "MEMBER",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "",
