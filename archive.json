@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-18T00:09:30.348268+00:00",
+  "timestamp": "2024-07-21T00:10:41.875486+00:00",
   "repo": "fynbos-dev/gnap-spc-extension",
   "labels": [
     {
@@ -49,7 +49,24 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 5,
+      "id": "I_kwDOI1pK9c6QDTgT",
+      "title": "F",
+      "url": "https://github.com/fynbos-dev/gnap-spc-extension/issues/5",
+      "state": "OPEN",
+      "author": "ofw5rz",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "- @omertoast  even had @jricher dinner [Cara]()",
+      "createdAt": "2024-07-18T15:54:38Z",
+      "updatedAt": "2024-07-18T15:54:38Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
   "pulls": [
     {
       "number": 1,
